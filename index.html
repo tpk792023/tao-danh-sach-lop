@@ -199,11 +199,20 @@ function classNameOf(sheetName) {
 
 /** sheets: [{name, rows}] -> [{lop, students}] (bo sheet khong co danh sach). */
 function parseWorkbook(sheets) {
-  var out = [];
+  // File vnEdu "cac mon toi day" co the co nhieu mon cho cung 1 lop (vd khoa_hoc_tu_nhien_8a7, hdtn_8a7).
+  // Moi lop chi lay 1 danh sach: uu tien sheet mon KHTN, neu khong co thi lay sheet dau tien.
+  var byLop = {}, order = [];
   sheets.forEach(function (sh) {
     var st = parseSheetRows(sh.rows);
-    if (st.length) out.push({ lop: classNameOf(sh.name), sheet: sh.name, students: st });
+    if (!st.length) return;
+    var lop = classNameOf(sh.name), item = { lop: lop, sheet: sh.name, students: st, others: [] };
+    var cur = byLop[lop];
+    if (!cur) { byLop[lop] = item; order.push(lop); return; }
+    var isKhtn = /khoa_?hoc_?tu_?nhien|khtn/i.test(sh.name), curKhtn = /khoa_?hoc_?tu_?nhien|khtn/i.test(cur.sheet);
+    if (isKhtn && !curKhtn) { item.others = cur.others.concat([cur.sheet]); byLop[lop] = item; }
+    else cur.others.push(sh.name);
   });
+  var out = order.map(function (l) { return byLop[l]; });
   out.sort(function (a, b) {
     var x = /^(\d+)A(\d+)$/.exec(a.lop), y = /^(\d+)A(\d+)$/.exec(b.lop);
     if (x && y) return (+x[1] - +y[1]) || (+x[2] - +y[2]);
@@ -292,6 +301,7 @@ function buildKhtn(ExcelJS, classes, term) {
   var wb = new ExcelJS.Workbook();
   var p = term.split(' '), hkText = p[0] === 'HK1' ? 'HỌC KỲ I' : 'HỌC KỲ II';
   classes.forEach(function (c) {
+    if (!/^[6-9]A\d{1,2}$/.test(c.lop)) return;     // so nhap diem chi nhan ten lop dang 8A1
     var ws = wb.addWorksheet(term + ' ' + c.lop);
     ws.getCell('A1').value = 'TRƯỜNG TIỂU HỌC VÀ THCS ĐA PHƯỚC'; ws.getCell('A1').font = { bold: true };
     ws.getCell('A2').value = 'BẢNG ĐIỂM MÔN KHOA HỌC TỰ NHIÊN - LỚP ' + c.lop + ' - ' + hkText + ' NĂM HỌC ' + p[1];
@@ -431,7 +441,11 @@ $('file').addEventListener('change', function () {
     data.forEach(function (c) { c.on = true; });
     if (!data.length) { $('file-msg').innerHTML = '<div class="alert err">Không tìm thấy danh sách học sinh (cần có cột "Mã học sinh") trong file này.</div>'; return; }
     var tong = data.reduce(function (a, c) { return a + c.students.length; }, 0);
-    $('file-msg').innerHTML = '<div class="alert ok">Đọc được ' + data.length + ' lớp, ' + tong + ' học sinh. Bỏ tích lớp nào không cần.</div>';
+    var dup = data.filter(function (c) { return c.others.length; });
+    $('file-msg').innerHTML = '<div class="alert ok">Đọc được ' + data.length + ' lớp, ' + tong + ' học sinh. Bỏ tích lớp nào không cần.</div>' +
+      (dup.length ? '<div class="note">File có nhiều môn cho cùng một lớp (' + esc(dup.map(function (c) { return c.lop; }).join(', ')) +
+        '). Mỗi lớp chỉ lấy 1 danh sách, ưu tiên sheet môn Khoa học tự nhiên: ' +
+        esc(dup.map(function (c) { return c.lop + ' ← ' + c.sheet; }).join('; ')) + '.</div>' : '');
     $('classes').innerHTML = data.map(function (c, i) {
       return '<label class="chk on"><input type="checkbox" data-c="' + i + '" checked> ' + esc(c.lop) + ' (' + c.students.length + ')</label>';
     }).join('');
