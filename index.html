@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PK79 - Tạo danh sách lớp</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f1f5f9;color:#172033;font:16px Arial,sans-serif}
+.wrap{max-width:1100px;margin:24px auto;padding:0 14px}
+.head{background:linear-gradient(135deg,#0f172a,#1d4ed8);color:#fff;padding:22px;border-radius:12px 12px 0 0;text-align:center}
+.head h1{margin:0 0 8px;font-size:24px;color:#facc15;text-shadow:1px 1px 3px rgba(0,0,0,.5);text-transform:uppercase}
+.head p{margin:0;color:#e0f2fe}
+.panel{background:#fff;padding:20px;border-radius:0 0 12px 12px;box-shadow:0 4px 18px #0001}
+.step{border:1px solid #cbd5e1;border-radius:10px;padding:14px 16px;margin:0 0 16px;background:#fbfdff}
+.step h2{margin:0 0 10px;font-size:18px;color:#1e3a8a}
+.step h2 b{display:inline-block;background:#1d4ed8;color:#fff;border-radius:50%;width:26px;height:26px;text-align:center;line-height:26px;margin-right:6px;font-size:15px}
+.small{color:#64748b;font-size:13px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0}
+label.chk{display:inline-flex;align-items:center;gap:6px;border:1px solid #cbd5e1;border-radius:7px;padding:7px 10px;background:#fff;cursor:pointer}
+label.chk.on{border-color:#1d4ed8;background:#eff6ff}
+input[type=checkbox],input[type=radio]{width:18px;height:18px}
+input[type=text],input[type=number],select{padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:15px}
+input.w{width:100%}
+.btn{display:inline-block;padding:10px 15px;border:0;border-radius:7px;background:#1769aa;color:#fff;font-weight:bold;cursor:pointer;font-size:15px}
+.btn.green{background:#187447}.btn.gray{background:#64748b}.btn.red{background:#b91c1c;padding:6px 10px;font-size:13px}
+.btn.big{font-size:17px;padding:13px 20px}
+.btn:disabled{opacity:.6;cursor:wait}
+.alert{padding:12px;border-radius:7px;margin:10px 0}.ok{background:#dcfce7;color:#166534}.err{background:#fee2e2;color:#991b1b}
+.note{background:#eff6ff;color:#1e40af;padding:10px 12px;border-radius:7px;margin:8px 0;font-size:14px}
+.custom{display:flex;gap:8px;align-items:center;margin:6px 0}
+.custom input[type=text]{flex:1}
+.custom input[type=number]{width:80px}
+.grid2{display:grid;grid-template-columns:170px 1fr;gap:8px;align-items:center}
+.table-wrap{overflow:auto;border:1px solid #cbd5e1;border-radius:8px;margin-top:8px}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #94a3b8;padding:6px 8px;font-size:14px;text-align:center}
+th{background:#e2e8f0}
+td.l{text-align:left}
+.hidden{display:none}
+.mode{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mode label{display:block;border:2px solid #cbd5e1;border-radius:10px;padding:12px;cursor:pointer;background:#fff}
+.mode label.on{border-color:#16834a;background:#f0fdf4}
+.mode b{display:block;margin-bottom:4px}
+.copyright{margin-top:10px;font-weight:bold;color:#0f172a;background:#e2e8f0;padding:10px;border-radius:6px;text-align:center}
+@media(max-width:700px){.mode{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.wrap{padding:0 6px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>PK79 - TẠO DANH SÁCH LỚP</h1>
+    <p>Từ file sổ điểm tải về từ vnEdu · Trường Tiểu học và THCS Đa Phước</p>
+  </div>
+  <div class="panel">
+    <div class="note">File được xử lý ngay trên máy của thầy cô, <b>không gửi lên mạng</b>. Trang này không đụng tới sổ nhập điểm.</div>
+
+    <div class="step">
+      <h2><b>1</b>Chọn file sổ điểm tải từ vnEdu (.xlsx)</h2>
+      <input id="file" type="file" accept=".xlsx,.xls">
+      <div id="file-msg"></div>
+      <div id="classes" class="row"></div>
+      <div id="class-tools" class="row hidden">
+        <button class="btn gray" type="button" id="all-on">Chọn tất cả lớp</button>
+        <button class="btn gray" type="button" id="all-off">Bỏ chọn tất cả</button>
+      </div>
+    </div>
+
+    <div class="step">
+      <h2><b>2</b>Danh sách dùng để làm gì?</h2>
+      <div class="mode">
+        <label class="on"><input type="radio" name="mode" value="free" checked> <b>Danh sách theo ý thầy</b>
+          <span class="small">Tự chọn cột, thêm cột trống (ký tên, điểm danh, ghi chú…), tự đặt tiêu đề. Dùng để in hoặc làm việc khác.</span></label>
+        <label><input type="radio" name="mode" value="khtn"> <b>Mẫu sổ nhập điểm KHTN</b>
+          <span class="small">Đúng mẫu tab để đưa vào Google Sheet nhập điểm (Học kỳ I/II, năm học mới).</span></label>
+      </div>
+    </div>
+
+    <div id="free-opts">
+      <div class="step">
+        <h2><b>3</b>Chọn cột có trong danh sách</h2>
+        <div class="row" id="base-cols"></div>
+        <div class="small">Cột thêm (để trống cho thầy cô ghi tay hoặc nhập sau):</div>
+        <div id="custom-list"></div>
+        <div class="row">
+          <button class="btn" type="button" id="add-col">+ Thêm cột</button>
+          <span class="small">Gợi ý nhanh:</span>
+          <button class="btn gray" type="button" data-preset="Ký tên">Ký tên</button>
+          <button class="btn gray" type="button" data-preset="Ghi chú">Ghi chú</button>
+          <button class="btn gray" type="button" data-preset="Điểm danh">Điểm danh</button>
+          <button class="btn gray" type="button" data-preset="Số điện thoại PH">SĐT phụ huynh</button>
+        </div>
+      </div>
+      <div class="step">
+        <h2><b>4</b>Tiêu đề và cách sắp xếp</h2>
+        <div class="grid2">
+          <span>Dòng 1 (tên trường)</span><input class="w" type="text" id="t1" value="TRƯỜNG TIỂU HỌC VÀ THCS ĐA PHƯỚC">
+          <span>Dòng 2 (tiêu đề)</span><input class="w" type="text" id="t2" value="DANH SÁCH HỌC SINH LỚP {lop}">
+          <span>Dòng 3 (phụ)</span><input class="w" type="text" id="t3" value="Năm học 2026-2027">
+          <span>Sắp xếp</span>
+          <select id="sort"><option value="vnedu">Giữ thứ tự như vnEdu</option><option value="abc">Theo tên A → Z (tên, rồi họ đệm)</option></select>
+          <span>Khổ giấy khi in</span>
+          <select id="orient"><option value="portrait">A4 đứng</option><option value="landscape">A4 ngang</option></select>
+        </div>
+        <p class="small">Chữ <b>{lop}</b> sẽ tự đổi thành tên lớp, ví dụ "DANH SÁCH HỌC SINH LỚP 8A1".</p>
+      </div>
+    </div>
+
+    <div id="khtn-opts" class="hidden">
+      <div class="step">
+        <h2><b>3</b>Học kỳ và năm học</h2>
+        <div class="row">
+          <select id="hk"><option value="HK1">Học kỳ I</option><option value="HK2">Học kỳ II</option></select>
+          <span>Năm học</span>
+          <input type="text" id="nam" value="2027-2028" style="width:130px" placeholder="2027-2028">
+        </div>
+        <p class="small">Mỗi lớp thành 1 tab tên dạng <b id="tab-demo">HK1 2027-2028 8A1</b>, có sẵn cột Vật lý, Hóa học, Sinh học, Tổng.
+          Đưa vào Google Sheet: <b>Tệp → Nhập → Tải lên → Chèn (các) trang tính mới</b>.</p>
+        <div id="khtn-warn"></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <h2><b id="step-last">5</b>Xem trước và tải về</h2>
+      <div class="row">
+        <button class="btn big green" type="button" id="make" disabled>TẢI FILE EXCEL</button>
+        <span id="make-msg" class="small">Chọn file vnEdu trước.</span>
+      </div>
+      <div id="preview"></div>
+    </div>
+
+    <div class="copyright">Bản quyền: Thầy Tống Phước Khải-GV-Trường TH&amp;THCS Đa Phước-Vĩnh Hậu-AnGiang</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script>
+// ===================== PHAN LOI (khong phu thuoc giao dien) =====================
+// BEGIN-CORE
+var BASE_COLS = [
+  { key: 'stt', label: 'STT', width: 6, on: true },
+  { key: 'ma', label: 'Mã học sinh', width: 14, on: true },
+  { key: 'ten', label: 'Họ và tên', width: 30, on: true },
+  { key: 'hodem', label: 'Họ đệm (tách riêng)', head: 'Họ đệm', width: 22, on: false },
+  { key: 'tenrieng', label: 'Tên (tách riêng)', head: 'Tên', width: 10, on: false },
+  { key: 'ns', label: 'Ngày sinh', width: 12, on: true }
+];
+
+function normH(s) { return String(s == null ? '' : s).replace(/\s+/g, '').toUpperCase(); }
+function maText(v) {
+  if (typeof v === 'number' && isFinite(v) && Math.floor(v) === v) return String(v);
+  var s = String(v == null ? '' : v).trim();
+  if (/^\d+(\.\d+)?E\+?\d+$/i.test(s) || /^\d+\.0+$/.test(s)) { var n = Number(s); if (isFinite(n) && Math.floor(n) === n) return String(n); }
+  return s;
+}
+function nsText(v) {
+  if (typeof v === 'number' && v > 20000 && v < 80000) {           // ngay dang so cua Excel
+    var d = new Date(Math.round((v - 25569) * 86400000));
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return p(d.getUTCDate()) + '/' + p(d.getUTCMonth() + 1) + '/' + d.getUTCFullYear();
+  }
+  return String(v == null ? '' : v).trim();
+}
+
+/** Doc 1 sheet (mang cac dong) -> danh sach hoc sinh. */
+function parseSheetRows(rows) {
+  var hdr = -1;
+  for (var i = 0; i < Math.min(rows.length, 25); i++) {
+    if ((rows[i] || []).some(function (c) { var t = normH(c); return t === 'MÃHỌCSINH' || t === 'MÃHS'; })) { hdr = i; break; }
+  }
+  if (hdr < 0) return [];
+  var h = rows[hdr].map(normH);
+  var cMa = h.findIndex(function (t) { return t === 'MÃHỌCSINH' || t === 'MÃHS'; });
+  var cTen = h.findIndex(function (t) { return t === 'HỌVÀTÊN' || t === 'HỌTÊN'; });
+  if (cTen < 0) cTen = cMa + 1;
+  var cNs = h.findIndex(function (t) { return t === 'NGÀYSINH'; });
+  // vnEdu tach Ho dem / Ten thanh 2 cot: cot ngay sau "Ho va ten" khong co tieu de
+  var split = !h[cTen + 1];
+  var out = [];
+  rows.slice(hdr + 1).forEach(function (r) {
+    r = r || [];
+    var stt = r[0], ma = maText(r[cMa]), hodem = String(r[cTen] == null ? '' : r[cTen]).trim();
+    var tenrieng = split ? String(r[cTen + 1] == null ? '' : r[cTen + 1]).trim() : '';
+    if (typeof stt !== 'number' && !/^\d+$/.test(String(stt || '').trim())) return;
+    if (!ma || !hodem) return;
+    if (!split) {                                       // ho ten chung 1 cot -> tach tu cuoi lam ten
+      var parts = hodem.split(/\s+/); tenrieng = parts.pop(); hodem = parts.join(' ');
+    }
+    out.push({ ma: ma, hodem: hodem, tenrieng: tenrieng, ten: (hodem + ' ' + tenrieng).trim(), ns: cNs >= 0 ? nsText(r[cNs]) : '' });
+  });
+  return out;
+}
+
+function classNameOf(sheetName) {
+  var m = /([6-9]a\d{1,2})\s*$/i.exec(sheetName || '');
+  return m ? m[1].toUpperCase() : String(sheetName || '').trim();
+}
+
+/** sheets: [{name, rows}] -> [{lop, students}] (bo sheet khong co danh sach). */
+function parseWorkbook(sheets) {
+  var out = [];
+  sheets.forEach(function (sh) {
+    var st = parseSheetRows(sh.rows);
+    if (st.length) out.push({ lop: classNameOf(sh.name), sheet: sh.name, students: st });
+  });
+  out.sort(function (a, b) {
+    var x = /^(\d+)A(\d+)$/.exec(a.lop), y = /^(\d+)A(\d+)$/.exec(b.lop);
+    if (x && y) return (+x[1] - +y[1]) || (+x[2] - +y[2]);
+    return a.lop < b.lop ? -1 : a.lop > b.lop ? 1 : 0;
+  });
+  return out;
+}
+
+function sortStudents(list, how) {
+  var s = list.slice();
+  if (how === 'abc') {
+    s.sort(function (a, b) {
+      return a.tenrieng.localeCompare(b.tenrieng, 'vi', { sensitivity: 'base' }) ||
+             a.hodem.localeCompare(b.hodem, 'vi', { sensitivity: 'base' });
+    });
+  }
+  return s;
+}
+
+function sheetTitle(name, used) {
+  var t = String(name).replace(/[\\\/\?\*\[\]:]/g, ' ').slice(0, 31).trim() || 'Lop';
+  var base = t, k = 2;
+  while (used[t.toUpperCase()]) { t = base.slice(0, 28) + ' ' + k++; }
+  used[t.toUpperCase()] = 1;
+  return t;
+}
+
+var THIN = { style: 'thin', color: { argb: 'FF94A3B8' } };
+var BORDER = { top: THIN, left: THIN, bottom: THIN, right: THIN };
+var HEAD_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F4E78' } };
+
+/** Danh sach theo y thay. opts: {cols:[{key|custom,head,width}], t1,t2,t3, sort, orient} */
+function buildFree(ExcelJS, classes, opts) {
+  var wb = new ExcelJS.Workbook(), used = {};
+  classes.forEach(function (c) {
+    var n = opts.cols.length;
+    var ws = wb.addWorksheet(sheetTitle(c.lop, used), {
+      pageSetup: { paperSize: 9, orientation: opts.orient || 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0,
+                   margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 } }
+    });
+    var titles = [opts.t1, (opts.t2 || '').replace(/\{lop\}/gi, c.lop), (opts.t3 || '').replace(/\{lop\}/gi, c.lop)];
+    var r = 1;
+    titles.forEach(function (t, i) {
+      if (!t) return;
+      ws.mergeCells(r, 1, r, n);
+      var cell = ws.getCell(r, 1);
+      cell.value = t;
+      cell.font = { bold: i < 2, size: i === 1 ? 14 : 12, name: 'Times New Roman' };
+      cell.alignment = { horizontal: i === 0 ? 'left' : 'center' };
+      r++;
+    });
+    r++;
+    var hr = r;
+    opts.cols.forEach(function (col, j) {
+      var cell = ws.getCell(hr, j + 1);
+      cell.value = col.head;
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, name: 'Times New Roman', size: 12 };
+      cell.fill = HEAD_FILL;
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      cell.border = BORDER;
+      ws.getColumn(j + 1).width = col.width || 12;
+    });
+    ws.getRow(hr).height = 30;
+    sortStudents(c.students, opts.sort).forEach(function (s, i) {
+      var row = hr + 1 + i;
+      opts.cols.forEach(function (col, j) {
+        var cell = ws.getCell(row, j + 1), v = '';
+        if (col.key === 'stt') v = i + 1;
+        else if (col.key) v = s[col.key] || '';
+        cell.value = v;
+        if (col.key === 'ma') cell.numFmt = '@';
+        cell.font = { name: 'Times New Roman', size: 12 };
+        cell.border = BORDER;
+        cell.alignment = { horizontal: (col.key === 'ten' || col.key === 'hodem' || !col.key) ? 'left' : 'center', vertical: 'middle' };
+      });
+      ws.getRow(row).height = 20;
+    });
+    ws.views = [{ state: 'frozen', ySplit: hr }];
+    ws.pageSetup.printTitlesRow = hr + ':' + hr;
+  });
+  return wb;
+}
+
+/** Mau so nhap diem KHTN: tab "HK1 2027-2028 8A1", cot co dinh, cong thuc Tong, gioi han diem. */
+function buildKhtn(ExcelJS, classes, term) {
+  var wb = new ExcelJS.Workbook();
+  var p = term.split(' '), hkText = p[0] === 'HK1' ? 'HỌC KỲ I' : 'HỌC KỲ II';
+  classes.forEach(function (c) {
+    var ws = wb.addWorksheet(term + ' ' + c.lop);
+    ws.getCell('A1').value = 'TRƯỜNG TIỂU HỌC VÀ THCS ĐA PHƯỚC'; ws.getCell('A1').font = { bold: true };
+    ws.getCell('A2').value = 'BẢNG ĐIỂM MÔN KHOA HỌC TỰ NHIÊN - LỚP ' + c.lop + ' - ' + hkText + ' NĂM HỌC ' + p[1];
+    ws.getCell('A2').font = { bold: true, size: 13 };
+    ws.getCell('A3').value = 'Lý tối đa 5 - Hóa tối đa 2,5 - Sinh tối đa 2,5 - Tổng tối đa 10';
+    var heads = ['STT', 'Mã học sinh', 'Họ và tên', 'Ngày sinh', 'Vật lý (5đ)', 'Hóa học (2,5đ)', 'Sinh học (2,5đ)', 'Tổng (10đ)'];
+    heads.forEach(function (t, j) {
+      var cell = ws.getCell(4, j + 1);
+      cell.value = t; cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }; cell.fill = HEAD_FILL;
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }; cell.border = BORDER;
+    });
+    c.students.forEach(function (s, i) {
+      var r = 5 + i;
+      var vals = [i + 1, s.ma, s.ten, s.ns, null, null, null,
+        { formula: 'IF(COUNT(E' + r + ':G' + r + ')=3,ROUND(SUM(E' + r + ':G' + r + '),1),"")' }];
+      vals.forEach(function (v, j) {
+        var cell = ws.getCell(r, j + 1);
+        cell.value = v; cell.border = BORDER;
+        if (j !== 2) cell.alignment = { horizontal: 'center' };
+      });
+      ws.getCell(r, 2).numFmt = '@';
+    });
+    var last = 4 + c.students.length;
+    [['E', 5], ['F', 2.5], ['G', 2.5]].forEach(function (x) {
+      ws.dataValidations.add(x[0] + '5:' + x[0] + last, {
+        type: 'decimal', operator: 'between', allowBlank: true, formulae: [0, x[1]],
+        showErrorMessage: true, error: ('Điểm từ 0 đến ' + x[1]).replace('.', ',')
+      });
+    });
+    [6, 14, 30, 12, 12, 13, 13, 11].forEach(function (w, j) { ws.getColumn(j + 1).width = w; });
+    ws.views = [{ state: 'frozen', ySplit: 4 }];
+  });
+  return wb;
+}
+// END-CORE
+
+// ===================== GIAO DIEN =====================
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+
+var data = [];         // [{lop, students}]
+var custom = [];       // [{head, width}]
+var fileName = '';
+
+// ---- cot co ban ----
+(function () {
+  var saved = null; try { saved = JSON.parse(store('pk79_ds_cols') || 'null'); } catch (e) {}
+  if (saved) BASE_COLS.forEach(function (c) { if (saved.base && saved.base.hasOwnProperty(c.key)) c.on = saved.base[c.key]; });
+  if (saved && Array.isArray(saved.custom)) custom = saved.custom;
+  ['t1', 't2', 't3', 'sort', 'orient'].forEach(function (k) { if (saved && saved[k] != null) $(k).value = saved[k]; });
+})();
+
+function saveSettings() {
+  var base = {}; BASE_COLS.forEach(function (c) { base[c.key] = c.on; });
+  store('pk79_ds_cols', JSON.stringify({ base: base, custom: custom, t1: $('t1').value, t2: $('t2').value, t3: $('t3').value, sort: $('sort').value, orient: $('orient').value }));
+}
+
+function renderBase() {
+  $('base-cols').innerHTML = BASE_COLS.map(function (c) {
+    return '<label class="chk' + (c.on ? ' on' : '') + '"><input type="checkbox" data-key="' + c.key + '"' + (c.on ? ' checked' : '') + '> ' + esc(c.label) + '</label>';
+  }).join('');
+}
+$('base-cols').addEventListener('change', function (e) {
+  var c = BASE_COLS.filter(function (x) { return x.key === e.target.dataset.key; })[0];
+  if (!c) return;
+  c.on = e.target.checked; e.target.parentNode.classList.toggle('on', c.on);
+  saveSettings(); preview();
+});
+
+function renderCustom() {
+  $('custom-list').innerHTML = custom.map(function (c, i) {
+    return '<div class="custom"><input type="text" data-i="' + i + '" data-f="head" value="' + esc(c.head) + '" placeholder="Tên cột, ví dụ: Ký tên">' +
+      '<span class="small">rộng</span><input type="number" min="4" max="60" data-i="' + i + '" data-f="width" value="' + c.width + '">' +
+      '<button class="btn red" type="button" data-del="' + i + '">Xoá</button></div>';
+  }).join('');
+}
+$('custom-list').addEventListener('input', function (e) {
+  var i = e.target.dataset.i; if (i == null) return;
+  custom[i][e.target.dataset.f] = e.target.dataset.f === 'width' ? (Number(e.target.value) || 12) : e.target.value;
+  saveSettings(); preview();
+});
+$('custom-list').addEventListener('click', function (e) {
+  if (e.target.dataset.del == null) return;
+  custom.splice(+e.target.dataset.del, 1); renderCustom(); saveSettings(); preview();
+});
+$('add-col').addEventListener('click', function () { custom.push({ head: '', width: 12 }); renderCustom(); saveSettings(); });
+Array.prototype.forEach.call(document.querySelectorAll('[data-preset]'), function (b) {
+  b.addEventListener('click', function () {
+    var w = { 'Ký tên': 14, 'Ghi chú': 20, 'Điểm danh': 10, 'Số điện thoại PH': 16 }[b.dataset.preset] || 12;
+    custom.push({ head: b.dataset.preset, width: w }); renderCustom(); saveSettings(); preview();
+  });
+});
+['t1', 't2', 't3', 'sort', 'orient'].forEach(function (k) { $(k).addEventListener('input', function () { saveSettings(); preview(); }); $(k).addEventListener('change', function () { saveSettings(); preview(); }); });
+
+function chosenCols() {
+  var cols = BASE_COLS.filter(function (c) { return c.on; }).map(function (c) { return { key: c.key, head: c.head || c.label, width: c.width }; });
+  custom.forEach(function (c) { if (String(c.head).trim()) cols.push({ key: '', head: String(c.head).trim(), width: c.width || 12 }); });
+  return cols;
+}
+
+// ---- che do ----
+function mode() { return document.querySelector('input[name=mode]:checked').value; }
+Array.prototype.forEach.call(document.querySelectorAll('input[name=mode]'), function (r) {
+  r.addEventListener('change', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('.mode label'), function (l) { l.classList.toggle('on', l.querySelector('input').checked); });
+    $('free-opts').classList.toggle('hidden', mode() !== 'free');
+    $('khtn-opts').classList.toggle('hidden', mode() !== 'khtn');
+    $('step-last').textContent = mode() === 'free' ? '5' : '4';
+    preview();
+  });
+});
+function term() {
+  var nam = $('nam').value.replace(/\s+/g, '').replace(/[–—]/g, '-');
+  return /^\d{4}-\d{4}$/.test(nam) ? $('hk').value + ' ' + nam : '';
+}
+function updateTerm() {
+  var t = term();
+  $('tab-demo').textContent = (t || 'HK1 2027-2028') + ' ' + (data[0] ? data[0].lop : '8A1');
+  $('khtn-warn').innerHTML = !t ? '<div class="alert err">Năm học chưa đúng mẫu, ví dụ 2027-2028.</div>'
+    : t === 'HK1 2026-2027' ? '<div class="alert err">Học kỳ I năm học 2026-2027 đã có sẵn trong Google Sheet (các tab 8A1…9A6). Không cần tạo lại.</div>' : '';
+  preview();
+}
+$('hk').addEventListener('change', updateTerm); $('nam').addEventListener('input', updateTerm);
+
+// ---- doc file ----
+$('file').addEventListener('change', function () {
+  var f = this.files[0];
+  data = []; $('classes').innerHTML = ''; $('class-tools').classList.add('hidden'); $('file-msg').innerHTML = ''; preview();
+  if (!f) return;
+  if (typeof XLSX === 'undefined') { $('file-msg').innerHTML = '<div class="alert err">Chưa tải được thư viện, kiểm tra mạng rồi tải lại trang.</div>'; return; }
+  fileName = f.name.replace(/\.[^.]+$/, '');
+  f.arrayBuffer().then(function (buf) {
+    var wb = XLSX.read(buf, { type: 'array' });
+    var sheets = wb.SheetNames.map(function (n) { return { name: n, rows: XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: '' }) }; });
+    data = parseWorkbook(sheets);
+    data.forEach(function (c) { c.on = true; });
+    if (!data.length) { $('file-msg').innerHTML = '<div class="alert err">Không tìm thấy danh sách học sinh (cần có cột "Mã học sinh") trong file này.</div>'; return; }
+    var tong = data.reduce(function (a, c) { return a + c.students.length; }, 0);
+    $('file-msg').innerHTML = '<div class="alert ok">Đọc được ' + data.length + ' lớp, ' + tong + ' học sinh. Bỏ tích lớp nào không cần.</div>';
+    $('classes').innerHTML = data.map(function (c, i) {
+      return '<label class="chk on"><input type="checkbox" data-c="' + i + '" checked> ' + esc(c.lop) + ' (' + c.students.length + ')</label>';
+    }).join('');
+    $('class-tools').classList.remove('hidden');
+    updateTerm();
+  }).catch(function (e) { $('file-msg').innerHTML = '<div class="alert err">Không đọc được file: ' + esc(e.message) + '</div>'; });
+});
+$('classes').addEventListener('change', function (e) {
+  var i = e.target.dataset.c; if (i == null) return;
+  data[i].on = e.target.checked; e.target.parentNode.classList.toggle('on', e.target.checked); preview();
+});
+function setAll(v) {
+  data.forEach(function (c) { c.on = v; });
+  Array.prototype.forEach.call(document.querySelectorAll('#classes input'), function (x) { x.checked = v; x.parentNode.classList.toggle('on', v); });
+  preview();
+}
+$('all-on').addEventListener('click', function () { setAll(true); });
+$('all-off').addEventListener('click', function () { setAll(false); });
+
+function picked() { return data.filter(function (c) { return c.on; }); }
+
+// ---- xem truoc ----
+function preview() {
+  var cls = picked(), btn = $('make'), msg = $('make-msg');
+  if (!data.length) { btn.disabled = true; msg.textContent = 'Chọn file vnEdu trước.'; $('preview').innerHTML = ''; return; }
+  if (!cls.length) { btn.disabled = true; msg.textContent = 'Chưa chọn lớp nào.'; $('preview').innerHTML = ''; return; }
+  var c = cls[0], html;
+  if (mode() === 'free') {
+    var cols = chosenCols();
+    if (!cols.length) { btn.disabled = true; msg.textContent = 'Chưa chọn cột nào.'; $('preview').innerHTML = ''; return; }
+    var st = sortStudents(c.students, $('sort').value).slice(0, 5);
+    html = '<p class="small">Xem trước lớp ' + esc(c.lop) + ' (5 dòng đầu):</p><p><b>' + esc($('t2').value.replace(/\{lop\}/gi, c.lop)) + '</b></p>' +
+      '<div class="table-wrap"><table><tr>' + cols.map(function (x) { return '<th>' + esc(x.head) + '</th>'; }).join('') + '</tr>' +
+      st.map(function (s, i) {
+        return '<tr>' + cols.map(function (x) {
+          var v = x.key === 'stt' ? i + 1 : x.key ? s[x.key] : '';
+          return '<td' + (x.key === 'ten' || x.key === 'hodem' ? ' class="l"' : '') + '>' + esc(v) + '</td>';
+        }).join('') + '</tr>';
+      }).join('') + '</table></div>';
+    btn.disabled = false; msg.textContent = cls.length + ' lớp, mỗi lớp 1 sheet.';
+  } else {
+    if (!term()) { btn.disabled = true; msg.textContent = 'Nhập đúng năm học.'; $('preview').innerHTML = ''; return; }
+    html = '<p class="small">Xem trước tab <b>' + esc(term() + ' ' + c.lop) + '</b> (5 dòng đầu):</p><div class="table-wrap"><table>' +
+      '<tr><th>STT</th><th>Mã học sinh</th><th>Họ và tên</th><th>Ngày sinh</th><th>Vật lý (5đ)</th><th>Hóa học (2,5đ)</th><th>Sinh học (2,5đ)</th><th>Tổng (10đ)</th></tr>' +
+      c.students.slice(0, 5).map(function (s, i) {
+        return '<tr><td>' + (i + 1) + '</td><td>' + esc(s.ma) + '</td><td class="l">' + esc(s.ten) + '</td><td>' + esc(s.ns) + '</td><td></td><td></td><td></td><td></td></tr>';
+      }).join('') + '</table></div>';
+    btn.disabled = term() === 'HK1 2026-2027'; msg.textContent = cls.length + ' lớp, mỗi lớp 1 tab.';
+  }
+  $('preview').innerHTML = html;
+}
+
+// ---- tai file ----
+$('make').addEventListener('click', function () {
+  if (typeof ExcelJS === 'undefined') { $('make-msg').textContent = 'Chưa tải được thư viện Excel, kiểm tra mạng rồi tải lại trang.'; return; }
+  var btn = this, cls = picked(), wb, name;
+  btn.disabled = true;
+  try {
+    if (mode() === 'free') {
+      wb = buildFree(ExcelJS, cls, { cols: chosenCols(), t1: $('t1').value, t2: $('t2').value, t3: $('t3').value, sort: $('sort').value, orient: $('orient').value });
+      name = 'DanhSach_' + (cls.length === 1 ? cls[0].lop : cls.length + '_lop') + '.xlsx';
+    } else {
+      wb = buildKhtn(ExcelJS, cls, term());
+      name = 'DanhSach_' + term().replace(' ', '_') + '.xlsx';
+    }
+  } catch (e) { $('make-msg').textContent = 'Lỗi: ' + e.message; btn.disabled = false; return; }
+  wb.xlsx.writeBuffer().then(function (buf) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+    $('make-msg').textContent = 'Đã tải file ' + name;
+  }).catch(function (e) { $('make-msg').textContent = 'Lỗi: ' + e.message; })
+    .then(function () { btn.disabled = false; });
+});
+
+renderBase(); renderCustom(); preview();
+</script>
+</body>
+</html>
